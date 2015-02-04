@@ -8,6 +8,8 @@ class UdpClient:
         
     def connect(self):
         self.clnt_sock.connect((self.host, self.port))
+        data = self.clnt_sock.recv(500)
+        print data # TODO - just for testing
 
     def transmit(self, filename):
         print "TODO: add code to transmit file"

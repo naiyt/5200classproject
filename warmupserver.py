@@ -13,20 +13,22 @@ def validate_port(port):
         return False, "Port must be a digit"
 
 def main_loop(server):
-	while True:
-		clnt_sock, addr = server.serv_sock.accept()
-		clnt_sock.send("PONG")
-		clnt_sock.close()
+    while True:
+        clnt_sock, addr = server.serv_sock.accept()
+        clnt_sock.send("PONG")
+        clnt_sock.close()
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print "Usage: {} server_port"
+    if len(sys.argv) != 3:
+        print "Usage: {} host server_port".format(sys.argv[0])
         sys.exit()
-    server_port = sys.argv[1]
+    server_port = sys.argv[2]
+    host = sys.argv[1]
     valid_port, err = validate_port(server_port)
     if valid_port is False:
         print err
         sys.exit()
-    
-    server = udpserver.UdpServer(int(server_port))
+
+    server = udpserver.UdpServer(host, int(server_port))
     main_loop(server)
+
