@@ -8,18 +8,14 @@ class UdpClient:
         
     def connect(self):
         self.clnt_sock.connect((self.host, self.port))
-        data = self.clnt_sock.recv(500)
-        print data # TODO - just for testing
 
-    def transmit(self, filename):
-        print "TODO: add code to transmit file"
-        #open file
-        #create byte buffer for transmission
-        #send filename to server
-        #For loop
-        #determine if end of file is reached
-        #read upto 500 bytes of file, keeping track of current position in file
-        #write bytes to send buffer
-        #send 500 byte buffer
-        #end For loop
-        #send end of file message
+    def transmitFile(self, filename):
+        self.clnt_sock.send(filename)
+        self.clnt_sock.recv(500)
+        with open(filename, 'r') as f:
+            while True:
+                byte_s = f.read(500)
+                if not byte_s:
+                    break
+                self.clnt_sock.send(byte_s)
+        self.clnt_sock.send("")

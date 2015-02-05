@@ -2,6 +2,7 @@ from udp import udpclient
 import re
 import sys
 import os
+import socket
 
 def validate_port(port):
     if port.isdigit():
@@ -18,7 +19,13 @@ ifip = re.compile('\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0
 def validate_ip(ip):
     if ifip.match(ip):
         return True, "Valid"
-    return False, "Not a valid ipv4 IPaddress or localhost"
+    else:
+        try:
+            socket.gethostbyname(ip)
+            print "It's a valid hostname"
+            return True, "Valid"
+        except socket.error:
+            return False, "Not a valid ipv4 IPaddress or localhost"        
 
 def validate_file(filename):
     return os.path.exists(filename)
@@ -46,14 +53,4 @@ if __name__ == '__main__':
         
         client = udpclient.UdpClient(host, int(port))
         client.connect()
-        client.transmit(filename)
-        
-        # send file
-        
-
-
-
-"""
-regex for valid IPaddresses 
-\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|localhost)\s*
-"""
+        client.transmitFile(filename)
