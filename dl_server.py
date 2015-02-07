@@ -24,7 +24,7 @@ def main_loop(server):
         f = open(OUTPUTFILE, 'w')
         start_time = datetime.datetime.now()
         size = 0
-        clnt_sock.send("")
+        clnt_sock.send("ACKNOWLEDGED")
         while True:
             data = clnt_sock.recv(500)
             f.write(data)
