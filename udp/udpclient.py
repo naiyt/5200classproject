@@ -5,7 +5,7 @@ class UdpClient:
         self.host = host
         self.port = port
         protocol = socket.SOCK_STREAM if tcp else socket.SOCK_DGRAM
-        self.clnt_sock = socket.socket(socket.AF_INET, protocl)
+        self.clnt_sock = socket.socket(socket.AF_INET, protocol)
         
     def connect(self):
         self.clnt_sock.connect((self.host, self.port))
