@@ -1,10 +1,13 @@
 import socket
 
 class UdpClient:
-    def __init__(self, host, port):
+    def __init__(self, host, port, tcp=False):
         self.host = host
         self.port = port
-        self.clnt_sock = socket.socket()
+        if tcp:
+            self.clnt_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            self.clnt_sock = socket.socket()
         
     def connect(self):
         self.clnt_sock.connect((self.host, self.port))
