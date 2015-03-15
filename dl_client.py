@@ -1,8 +1,10 @@
-from udp import udpclient
+from udp import client
 import re
 import sys
 import os
 import socket
+
+TCP = True
 
 def validate_port(port):
     if port.isdigit():
@@ -51,6 +53,6 @@ if __name__ == '__main__':
             print err_host
             sys.exit()
         
-        client = udpclient.UdpClient(host, int(port))
+        client = client.Client(host, int(port), TCP)
         client.connect()
         client.transmitFile(filename)
