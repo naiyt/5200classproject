@@ -4,8 +4,6 @@ import sys
 import os
 import socket
 
-TCP = False
-
 def validate_port(port):
     if port.isdigit():
         port = int(port)

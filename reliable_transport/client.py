@@ -1,6 +1,8 @@
 import socket
 from udp import udpclient
 
+GOBACKN = True
+
 class Client:
     def __init__(self, host, port, packet_size=500):
         self.host = host
@@ -9,8 +11,16 @@ class Client:
         self.udp_connection = udpclient.Client(self.host, self.port)
 
     def transmit_file(self, filename):
-        pass # Here, it should break up the packets and start sending them through
-             # self.udp_connection.send_packet() per packet, using the appropriate reliability method
+        if GOBACKN is True:
+            go_back_n(filename)
+        else:
+            selective_repeat(filename)
+
+    def go_back_n(self, filename):
+        pass
+
+    def selective_repeat(self, filename):
+        pass
 
 '''
 Old transmission algo:
