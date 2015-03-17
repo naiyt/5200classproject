@@ -1,10 +1,10 @@
-from udp import client
+from reliable_transport import client
 import re
 import sys
 import os
 import socket
 
-TCP = True
+TCP = False
 
 def validate_port(port):
     if port.isdigit():
@@ -16,10 +16,9 @@ def validate_port(port):
     else:
         return False, "Port must be a digit"
 
-ifip = re.compile('\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|localhost)\s*')
-
+IPREGEX = re.compile('\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|localhost)\s*')
 def validate_ip(ip):
-    if ifip.match(ip):
+    if IPREGEX.match(ip):
         return True, "Valid"
     else:
         try:
@@ -27,10 +26,26 @@ def validate_ip(ip):
             print "It's a valid hostname"
             return True, "Valid"
         except socket.error:
-            return False, "Not a valid ipv4 IPaddress or localhost"        
+            return False, "Not a valid ipv4 IPaddress or localhost"
 
 def validate_file(filename):
-    return os.path.exists(filename)
+    return os.path.exists(filename), "{} does not exist".format(filename)
+
+def run_validations(host, port, filename):
+    valid_port, err = validate_port(port)
+    if valid_port is False:
+        print err
+        sys.exit()
+
+    valid_file, err = validate_file(filename)
+    if valid_file is False:
+        print err
+        sys.exit()
+
+    valid_host, err = validate_ip(host)
+    if valid_host is False:
+        print err
+        sys.exit()
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
@@ -39,20 +54,9 @@ if __name__ == '__main__':
         host = sys.argv[1]
         port = sys.argv[2]
         filename = sys.argv[3]
-        valid_port, err = validate_port(port)
-        if valid_port is False:
-            print err
-            sys.exit()
-        if validate_file(filename) is False:
-            print "{} does not exist".format(filename)
-            sys.exit()
-        
-        # host validation
-        valid_host, err_host = validate_ip(host)
-        if valid_host is False:
-            print err_host
-            sys.exit()
-        
-        client = client.Client(host, int(port), TCP)
-        client.connect()
-        client.transmitFile(filename)
+        run_validations(host, port, filename)
+
+        client = client.Client(host, int(port))
+        client.transmit_file(filename)
+        # client.connect()
+        # client.transmitFile(filename)
