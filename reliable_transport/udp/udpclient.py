@@ -1,8 +1,7 @@
 import socket
 
 class Client:
-    def __init__(self, host, port, packet_size=500):
-        self.packet_size = packet_size
+    def __init__(self, host, port):
         self.host = host
         self.port = port
         self.clnt_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
