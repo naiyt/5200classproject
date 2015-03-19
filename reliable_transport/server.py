@@ -25,6 +25,7 @@ class Server:
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
             self.ack()
+            print data
             # out_file.write(data)
             # if len(data) == 0:
                 # return

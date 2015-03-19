@@ -1,5 +1,5 @@
 import socket
-from udp import udpclient
+from udp import udp
 from header import Header
 
 GOBACKN = True
@@ -9,7 +9,7 @@ class Client:
         self.host = host
         self.port = port
         self.packet_size = packet_size
-        self.udp_connection = udpclient.Client(self.host, self.port)
+        self.udp_connection = udp.Udp(self.port+1)
 
     def transmit_file(self, filename):
         if GOBACKN is True:
@@ -26,7 +26,7 @@ class Client:
                 byte_s = f.read(500-Header.size())
                 if not byte_s:
                     break
-                self.udp_connection.send_packet(header.formatted + byte_s)
+                self.udp_connection.send_packet(header.formatted + byte_s, self.host, self.port)
 
     def selective_repeat(self, filename):
         pass
