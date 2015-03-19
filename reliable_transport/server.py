@@ -1,4 +1,5 @@
 from udp import udpserver
+from header import Header
 
 class Server:
     def __init__(self, port):
@@ -23,7 +24,8 @@ class Server:
 
     def receive_loop(self, out_file):
         while True:
-            data = self.udp_server.recv( )
+            data = self.udp_server.recv()
+            print data
             self.ack()
             out_file.write(data)
             if len(data) == 0:

@@ -1,5 +1,6 @@
 import socket
 from udp import udpclient
+from header import Header
 
 GOBACKN = True
 
@@ -12,9 +13,9 @@ class Client:
 
     def transmit_file(self, filename):
         if GOBACKN is True:
-            go_back_n(filename)
+            self.go_back_n(filename)
         else:
-            selective_repeat(filename)
+            self.selective_repeat(filename)
 
     def go_back_n(self, filename):
         pass
