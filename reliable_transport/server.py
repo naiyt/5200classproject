@@ -1,3 +1,4 @@
+import datetime
 from udp import udpserver
 from header import Header
 
@@ -8,13 +9,13 @@ class Server:
 
     def main_loop(self):
         while True:
-            filename = self.udp_server.recv()
-            print 'Receiving data for : {}'.format(filename)
-            f = open(filename)
+            # filename = self.udp_server.recv()
+            # print 'Receiving data for : {}'.format(filename)
+            # f = open(filename)
             start_time = datetime.datetime.now()
 
             self.ack()
-            self.receive_loop(f)
+            self.receive_loop()
             self.calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
 
             f.close()
@@ -22,14 +23,15 @@ class Server:
     def ack(self):
         print "ACKING - TODO: add ack code"
 
-    def receive_loop(self, out_file):
+    def receive_loop(self):
         while True:
-            data = self.udp_server.recv()
-            print data
+            packet = self.udp_server.recv()
+            header = Header.parse(packet[:Header.size()])
+            data = packet[Header.size():]
             self.ack()
-            out_file.write(data)
-            if len(data) == 0:
-                return
+            # out_file.write(data)
+            # if len(data) == 0:
+                # return
 
     def calc_throughput(self, start_time, end_time, file_size):
         time_elapsed = end_time - start_time

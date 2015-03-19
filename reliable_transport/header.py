@@ -14,3 +14,7 @@ class Header:
     def parse(header):
         unpacked = struct.unpack(FORMAT_STR, header)
         return Header(unpacked[0], unpacked[1], unpacked[2], unpacked[3])
+
+    @staticmethod
+    def size():
+        return 12
