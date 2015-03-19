@@ -1,11 +1,11 @@
 import datetime
-from udp import udpserver
+from udp import udp
 from header import Header
 
 class Server:
     def __init__(self, port):
         self.port = port
-        self.udp_server = udpserver.Server(self.port)
+        self.udp_server = udp.Udp(self.port)
 
     def main_loop(self):
         while True:
