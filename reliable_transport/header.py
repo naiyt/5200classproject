@@ -11,6 +11,10 @@ class Header:
         self.window_size = window_size                               #  2 bytes
         self.checksum = Header.checksum(data)                        # 32 bytes
         self.flags = [syn, ack, fin, file_name]                      #  4 bytes
+        self.syn = syn
+        self.ack = ack
+        self.fin = fin
+        self.file_name = file_name
         self.formatted = struct.pack(FORMAT_STR, self.seqn, self.ackn, self.window_size, self.checksum, *self.flags)
 
     @staticmethod

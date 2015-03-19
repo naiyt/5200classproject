@@ -34,23 +34,28 @@ class Client:
         pass
 
     def _handshake(self):
+        print 'Starting handshake...'
         self._send_syn()
         received_seqn = self._wait_for_syn_ack()
         self._send_ack(received_seqn)
 
     def _send_syn(self):
+        print 'Sending syn...'
         header = Header(STARTING_SEQN, 0, 5, '', syn=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)
 
     def _wait_for_syn_ack(self):
-        syn_ack = self.udp_connection.recv()
+        print 'Waiting for syn-ack from server...'
+        syn_ack = self.udp_connection.recv()[0]
         header = Header.parse(syn_ack[:Header.size()])
         if header.ackn != STARTING_SEQN+1:
             raise Exception('Incorrect received seqn: should be {}, was {}'.format(STARTING_SEQN+1, header.ackn))
         if header.syn is False or header.ack is False:
             raise Exception('The server did not respond with a SYN-ACK')
+        print 'syn-ack received...'
         return header.seqn
 
     def _send_ack(self, received_seqn):
+        print 'Sending final ack to server...'
         header = Header(STARTING_SEQN+1, received_seqn+1, 5, '', ack=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)

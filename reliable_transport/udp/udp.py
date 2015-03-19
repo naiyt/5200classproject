@@ -11,8 +11,7 @@ class Udp:
         self.clnt_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def recv(self):
-        data = self.serv_sock.recvfrom(self.packet_size) # It returns a tuple, where the first entry is the data, second is the ip received from
-        return data[0]
+        return self.serv_sock.recvfrom(self.packet_size) # It returns a tuple, where the first entry is the data, second is the ip received from
 
     def send_packet(self, to_send, host, port):
         self.clnt_sock.sendto(to_send, (host, port))
