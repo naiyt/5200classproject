@@ -20,13 +20,13 @@ class Client:
     def go_back_n(self, filename):
         with open(filename, 'r') as f:
             while True:
-                header = Header(1, 1, 1, 1)
+                data = f.read(500-Header.size())
+                header = Header(1, 1, 1, 1, data)
                 if len(header.formatted) != Header.size():
-                    raise 'Header size is wrong'
-                byte_s = f.read(500-Header.size())
-                if not byte_s:
+                    raise Exception('Header size is wrong: should be {}, was {}'.format(Header.size(), len(header.formatted)))
+                if not data:
                     break
-                self.udp_connection.send_packet(header.formatted + byte_s, self.host, self.port)
+                self.udp_connection.send_packet(header.formatted + data, self.host, self.port)
 
     def selective_repeat(self, filename):
         pass
