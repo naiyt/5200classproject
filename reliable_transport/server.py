@@ -16,7 +16,7 @@ class Server:
             # f = open(filename)
             start_time = datetime.datetime.now()
             self.receive_loop()
-            self.calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
+            self._calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
 
     def ack(self):
         print "ACKING - TODO: add ack code"
@@ -30,8 +30,7 @@ class Server:
             data = packet[Header.size():]
             if header.syn:
                 self._handshake(header, host_and_port)
-            self.ack()
-            print data
+            # self.ack()
             # out_file.write(data)
             # if len(data) == 0:
                 # return
@@ -48,9 +47,10 @@ class Server:
 
     def _wait_for_ack(self):
         print 'Waiting for client ack...'
-        pass
+        ack = self.udp_server.recv()[0]
+        print 'Client ack received'
 
-    def calc_throughput(self, start_time, end_time, file_size):
+    def _calc_throughput(self, start_time, end_time, file_size):
         time_elapsed = end_time - start_time
         file_size = os.path.getsize(OUTPUTFILE)
         throughput = (file_size / 125) / time_elapsed.total_seconds()
