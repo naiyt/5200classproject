@@ -13,12 +13,8 @@ class Server:
             # print 'Receiving data for : {}'.format(filename)
             # f = open(filename)
             start_time = datetime.datetime.now()
-
-            self.ack()
             self.receive_loop()
             self.calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
-
-            f.close()
 
     def ack(self):
         print "ACKING - TODO: add ack code"
