@@ -28,7 +28,8 @@ class Server:
             if header.syn:
                 self._handshake(header, host)
             else:
-                self._validate_checksum(header.checksum, data)
+                print header.checksum
+                print self._validate_checksum(header.checksum, data)
 
     def _handshake(self, header, host):
         print 'Initiating client handshake...'
@@ -50,5 +51,8 @@ class Server:
         throughput = (file_size / 125) / time_elapsed.total_seconds()
         print "Throughput: {} kbps".format(round(throughput, 2))
 
-    def _validate_checksum(checksum, data):
-        pass
+    def _validate_checksum(self, checksum, data):
+        if Header.checksum(data) != checksum:
+            return False
+        else:
+            return True

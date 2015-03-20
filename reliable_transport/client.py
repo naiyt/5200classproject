@@ -23,7 +23,7 @@ class Client:
         with open(filename, 'r') as f:
             while True:
                 data = f.read(500-Header.size())
-                header = Header(1, 1, 1, data)
+                header = Header(1, 1, 1, Header.checksum(data))
                 if len(header.formatted) != Header.size():
                     raise Exception('Header size is wrong: should be {}, was {}'.format(Header.size(), len(header.formatted)))
                 if not data:
