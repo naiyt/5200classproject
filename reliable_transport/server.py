@@ -27,17 +27,19 @@ class Server:
             host = data[1][0]
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
-            print data
             if header.syn:
                 self._handshake(header, host)
             else:
                 if header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
+                    print 'correctly ordered packet received'
                     self.seqn += 1
+                else:
+                    print 'bad packet, going back n'
                 self.ack(header, host)
 
     def _handshake(self, header, host):
         print 'Initiating client handshake...'
-        self.seqn = header.seqn + 1
+        self.seqn = header.seqn
         self._send_syn_ack(header, host)
         self._wait_for_ack()
 
@@ -49,6 +51,7 @@ class Server:
     def _wait_for_ack(self):
         print 'Waiting for client ack...'
         ack = self.udp_server.recv()
+        print 'Client ack received'
 
     def _calc_throughput(self, start_time, end_time, file_size):
         time_elapsed = end_time - start_time
