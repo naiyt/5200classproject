@@ -31,8 +31,7 @@ class Server:
             if header.syn:
                 self._handshake(header, host)
             else:
-                print self._validate_checksum(header.checksum, data)
-                if header.seqn == self.seqn:
+                if header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
                     self.seqn += 1
                 self.ack(header, host)
 
