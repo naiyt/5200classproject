@@ -28,7 +28,6 @@ class Server:
             if header.syn:
                 self._handshake(header, host)
             else:
-                print header.checksum
                 print self._validate_checksum(header.checksum, data)
 
     def _handshake(self, header, host):
