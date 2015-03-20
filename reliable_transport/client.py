@@ -29,6 +29,7 @@ class Client:
 
     def transmit_file(self, filename):
         self._handshake()
+        print 'Beginning to transmit file...'
         if GOBACKN is True:
             # Thread(target=self.receive).start()
             self.go_back_n(filename)
@@ -58,7 +59,14 @@ class Client:
     def receive(self):
         try:
             data = self.udp_connection.recv(non_blocking=True)
-            print data
+            packet = data[0]
+            header = Header.parse(packet[:Header.size()])
+            if header.ack:
+                print 'Packet received, moving window'
+                self.seq_max += (header.seqn-self.seq_base)
+                self.seq_base = header.seqn
+            else:
+                print 'did not ack'
         except socket.error:
             pass
 

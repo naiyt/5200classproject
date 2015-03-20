@@ -3,6 +3,7 @@ from udp import udp
 from header import Header
 
 STARTING_SEQN = 0
+WINDOW_SIZE = 5
 
 class Server:
     def __init__(self, port):
@@ -15,8 +16,9 @@ class Server:
             self.receive_loop()
             self._calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
 
-    def ack(self):
-        print "ACKING - TODO: add ack code"
+    def ack(self, received_header, host):
+        header = Header(received_header.seqn+1, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
+        self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
         while True:
@@ -29,6 +31,7 @@ class Server:
                 self._handshake(header, host)
             else:
                 print self._validate_checksum(header.checksum, data)
+                self.ack(header, host)
 
     def _handshake(self, header, host):
         print 'Initiating client handshake...'
