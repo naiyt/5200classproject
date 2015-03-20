@@ -3,20 +3,32 @@ from udp import udp
 from header import Header
 from threading import Thread
 import sys
+import time
 
-GOBACKN = True
 STARTING_SEQN = 0
 WINDOW_SIZE = 5
 QUEUE_SIZE = 50
+INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
+TIMEOUT = 1.0
 
 class Packet:
     def __init__(self, packet):
         self.packet = packet
+        self.state = INIT
 
     def send(self, connection, host, port):
         connection.send_packet(self.packet, host, port)
+        self.state = SENT
+        self.timestamp = time.time()
+
+    def timeout(self):
+        if time.time() - self.timestamp > TIMEOUT:
+            print 'Packet timeout'
+            return True
+        else:
+            return False
 
 
 class Client:
@@ -30,14 +42,10 @@ class Client:
     def transmit_file(self, filename):
         self._handshake()
         print 'Beginning to transmit file...'
-        if GOBACKN is True:
-            # Thread(target=self.receive).start()
-            self.go_back_n(filename)
-        else:
-            self.selective_repeat(filename)
+        self.go_back_n(filename)
 
     def go_back_n(self, filename):
-        self.queue_loc = 0
+        self.queue = []
         self.seqn = 0
         self.seq_base = 0
         self.seq_max = self.window_size -1
@@ -51,10 +59,19 @@ class Client:
                         raise Exception('Header size is wrong: should be {}, was {}'.format(Header.size(), len(header.formatted)))
                     if not data:
                         break
-                    packet = Packet(header.formatted + data)
+                    if self.seqn == len(self.queue):
+                        packet = Packet(header.formatted + data)
+                        self.queue.append(packet)
+                    else:
+                        packet = self.queue[self.seqn]
+                        packet.state = INIT
                     packet.send(self.udp_connection, self.host, self.port)
-                    self.seqn += 1
                     self.receive()
+                    self.seqn += 1
+                elif self.queue[self.seq_base].timeout():
+                    for packet in self.queue[self.seq_base:self.seq_max]:
+                        packet.state = INIT
+                    self.seqn = self.seq_base
 
     def receive(self):
         try:
@@ -63,15 +80,13 @@ class Client:
             header = Header.parse(packet[:Header.size()])
             if header.ack:
                 print 'Packet received, moving window'
+                self.queue[self.seqn].state = RECEIVED
                 self.seq_max += (header.seqn-self.seq_base)
                 self.seq_base = header.seqn
             else:
                 print 'did not ack'
         except socket.error:
             pass
-
-    def selective_repeat(self, filename):
-        pass
 
 
     #########################3

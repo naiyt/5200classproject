@@ -27,6 +27,7 @@ class Server:
             host = data[1][0]
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
+            print data
             if header.syn:
                 self._handshake(header, host)
             else:
