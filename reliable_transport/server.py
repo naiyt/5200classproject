@@ -11,9 +11,6 @@ class Server:
 
     def main_loop(self):
         while True:
-            # filename = self.udp_server.recv()
-            # print 'Receiving data for : {}'.format(filename)
-            # f = open(filename)
             start_time = datetime.datetime.now()
             self.receive_loop()
             self._calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
@@ -30,10 +27,6 @@ class Server:
             data = packet[Header.size():]
             if header.syn:
                 self._handshake(header, host_and_port)
-            # self.ack()
-            # out_file.write(data)
-            # if len(data) == 0:
-                # return
 
     def _handshake(self, header, host_and_port):
         print 'Initiating client handshake...'
@@ -47,8 +40,7 @@ class Server:
 
     def _wait_for_ack(self):
         print 'Waiting for client ack...'
-        ack = self.udp_server.recv()[0]
-        print 'Client ack received'
+        ack = self.udp_server.recv()
 
     def _calc_throughput(self, start_time, end_time, file_size):
         time_elapsed = end_time - start_time

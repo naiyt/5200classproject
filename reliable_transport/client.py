@@ -13,7 +13,7 @@ class Client:
         self.udp_connection = udp.Udp(self.port+1)
 
     def transmit_file(self, filename):
-        self._handshake()
+        self._handshake(filename)
         if GOBACKN is True:
             self.go_back_n(filename)
         else:
