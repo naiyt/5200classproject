@@ -24,7 +24,7 @@ class Packet:
         self.timestamp = time.time()
 
     def timeout(self):
-        if time.time() - self.timestamp > TIMEOUT:
+        if time.time() - self.timestamp > TIMEOUT and self.state != RECEIVED:
             print 'Packet timeout'
             return True
         else:
@@ -56,6 +56,7 @@ class Client:
                     if self.seqn == len(self.queue):
                         data = f.read(500-Header.size())
                         if not data:
+                            print "Final seqn: {}".format(self.seqn)
                             break
                         header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
                         packet = Packet(header.formatted + data)
