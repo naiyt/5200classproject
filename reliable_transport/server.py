@@ -22,21 +22,21 @@ class Server:
         while True:
             data = self.udp_server.recv()
             packet = data[0]
-            host_and_port = data[1]
+            host = data[1][0]
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
             if header.syn:
-                self._handshake(header, host_and_port)
+                self._handshake(header, host)
 
-    def _handshake(self, header, host_and_port):
+    def _handshake(self, header, host):
         print 'Initiating client handshake...'
-        self._send_syn_ack(header, host_and_port)
+        self._send_syn_ack(header, host)
         self._wait_for_ack()
 
-    def _send_syn_ack(self, header, host_and_port):
+    def _send_syn_ack(self, header, host):
         print 'Sending syn-ack...'
         header = Header(STARTING_SEQN, header.seqn+1, header.window_size, '', syn=True, ack=True)
-        self.udp_server.send_packet(header.formatted, host_and_port[0], self.port+1)
+        self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def _wait_for_ack(self):
         print 'Waiting for client ack...'
