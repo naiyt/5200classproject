@@ -11,7 +11,7 @@ QUEUE_SIZE = 50
 INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
-TIMEOUT = 1.0
+TIMEOUT = 0.5
 
 class Packet:
     def __init__(self, packet):
@@ -54,7 +54,7 @@ class Client:
             while True:
                 if self.seqn <= self.seq_max:
                     data = f.read(500-Header.size())
-                    header = Header(1, 1, self.window_size, Header.checksum(data))
+                    header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
                     if len(header.formatted) != Header.size():
                         raise Exception('Header size is wrong: should be {}, was {}'.format(Header.size(), len(header.formatted)))
                     if not data:

@@ -17,7 +17,7 @@ class Server:
             self._calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
 
     def ack(self, received_header, host):
-        header = Header(received_header.seqn+1, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
+        header = Header(self.seqn, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
@@ -32,10 +32,13 @@ class Server:
                 self._handshake(header, host)
             else:
                 print self._validate_checksum(header.checksum, data)
+                if header.seqn == self.seqn:
+                    self.seqn += 1
                 self.ack(header, host)
 
     def _handshake(self, header, host):
         print 'Initiating client handshake...'
+        self.seqn = header.seqn + 1
         self._send_syn_ack(header, host)
         self._wait_for_ack()
 
