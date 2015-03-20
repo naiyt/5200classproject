@@ -1,6 +1,8 @@
 import socket
 from udp import udp
 from header import Header
+from threading import Thread
+import sys
 
 GOBACKN = True
 STARTING_SEQN = 0
@@ -28,6 +30,7 @@ class Client:
     def transmit_file(self, filename):
         self._handshake()
         if GOBACKN is True:
+            # Thread(target=self.receive).start()
             self.go_back_n(filename)
         else:
             self.selective_repeat(filename)
@@ -50,6 +53,14 @@ class Client:
                     packet = Packet(header.formatted + data)
                     packet.send(self.udp_connection, self.host, self.port)
                     self.seqn += 1
+                    self.receive()
+
+    def receive(self):
+        try:
+            data = self.udp_connection.recv(non_blocking=True)
+            print data
+        except socket.error:
+            pass
 
     def selective_repeat(self, filename):
         pass
