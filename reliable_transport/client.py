@@ -53,13 +53,11 @@ class Client:
         with open(filename, 'r') as f:
             while True:
                 if self.seqn <= self.seq_max:
-                    data = f.read(500-Header.size())
-                    header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
-                    if len(header.formatted) != Header.size():
-                        raise Exception('Header size is wrong: should be {}, was {}'.format(Header.size(), len(header.formatted)))
-                    if not data:
-                        break
                     if self.seqn == len(self.queue):
+                        data = f.read(500-Header.size())
+                        if not data:
+                            break
+                        header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
                         packet = Packet(header.formatted + data)
                         self.queue.append(packet)
                     else:
