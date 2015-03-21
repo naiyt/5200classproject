@@ -11,7 +11,7 @@ QUEUE_SIZE = 50
 INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
-TIMEOUT = 0.5
+TIMEOUT = 1.0
 
 class Packet:
     def __init__(self, packet):
@@ -53,7 +53,7 @@ class Client:
 
         with open(filename, 'r') as f:
             while True:
-                if self.seqn <= self.seq_max:
+                if self.seqn < self.seq_max:
                     if self.seqn == len(self.queue):
                         data = f.read(500-Header.size())
                         if not data:
@@ -81,10 +81,10 @@ class Client:
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
             if header.ack:
-                print 'Packet received, moving window'
                 self.queue[self.seqn].state = RECEIVED
                 self.seq_max += (header.seqn-self.seq_base)
                 self.seq_base = header.seqn
+                self.seqn = header.seqn
             else:
                 print 'did not ack'
         except socket.error:
@@ -114,8 +114,6 @@ class Client:
         print 'Waiting for syn-ack from server...'
         syn_ack = self.udp_connection.recv()[0]
         header = Header.parse(syn_ack[:Header.size()])
-        if header.ackn != STARTING_SEQN+1:
-            raise Exception('Incorrect received seqn: should be {}, was {}'.format(STARTING_SEQN+1, header.ackn))
         if header.syn is False or header.ack is False:
             raise Exception('The server did not respond with a SYN-ACK')
         print 'syn-ack received...'

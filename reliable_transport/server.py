@@ -34,14 +34,14 @@ class Server:
                     self.f = open(data+'out', 'w')
                     print 'Opening file {}out'.format(data)
                 elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
-                    print 'correctly ordered packet received'
                     self.f.write(data)
                     self.seqn += 1
                 elif header.fin:
                     self.f.close()
                     print 'finished transmitting file'
-                else:
-                    print 'bad packet, going back n'
+                # else:
+                    # print "got {}, wanted {}".format(header.seqn, self.seqn)
+                    # print 'bad packet, going back n'
                 self.ack(header, host)
 
     def _handshake(self, header, host):
@@ -52,7 +52,7 @@ class Server:
 
     def _send_syn_ack(self, header, host):
         print 'Sending syn-ack...'
-        header = Header(STARTING_SEQN, header.seqn+1, header.window_size, '', syn=True, ack=True)
+        header = Header(self.seqn, header.seqn+1, header.window_size, '', syn=True, ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def _wait_for_ack(self):
