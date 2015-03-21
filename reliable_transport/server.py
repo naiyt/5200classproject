@@ -30,16 +30,12 @@ class Server:
                 self._check_packet(data, header, host)
 
     def _check_packet(self, data, header, host):
-        '''
-        TODO: Make sure it doesn't reject an out of order packet. Write the packets
-        to the file after we move the window and have them in order
-        '''
         to_ack = True
         if header.file_name:
             self.file_name = data
-            self.f = open(self.file_name+'out', 'w')
+            self.f = open(self.file_name, 'w')
             self.start_time = datetime.datetime.now()
-            print 'Opening file {}out'.format(data)
+            print 'Opening file {}'.format(data)
         elif self._validate_checksum(header.checksum, data):
             self._add_to_write_queue(data, header.seqn)
             self.seqn += 1
