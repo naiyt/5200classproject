@@ -51,28 +51,20 @@ class Client:
                 header = Header(pos, 1, self.window_size, Header.checksum(data))
                 packet = Packet(header.formatted+data)
                 self.queue.append(packet)
-            print pos
             packet = self.queue[pos]
             if packet.state not in [RECEIVED, SENT] or packet.timeout():
                 packet.send(self.udp_connection, self.host, self.port)
             self._receive()
 
-        for packet in self.queue:
-            if packet.state == RECEIVED:
-                self.window_base += 1
-                self.window_max += 1
-            else:
-                break
+        self._advance_window()
 
     def _receive(self):
         try:
             data = self.udp_connection.recv(non_blocking=True)
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
-            if header.ack:
-                self.queue[self.seqn].state = RECEIVED
-            else:
-                self.queue[header.seqn].state = FAILED
+            print header.seqn
+            self.queue[header.seqn].state = RECEIVED if header.ack else FAILED
         except socket.error:
             pass
 
@@ -86,6 +78,14 @@ class Client:
         header = Header(0,0, 5, Header.checksum(filename), file_name=True)
         self.udp_connection.send_packet(header.formatted+filename, self.host, self.port)
         ack = self.udp_connection.recv()
+
+    def _advance_window(self):
+        for packet in self.queue:
+            if packet.state == RECEIVED:
+                self.window_base += 1
+                self.window_max += 1
+            else:
+                return
 
     #########################3
     #  Handshake

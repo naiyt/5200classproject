@@ -26,6 +26,10 @@ class Server:
                 self._check_packet(data, header, host)
 
     def _check_packet(self, data, header, host):
+        '''
+        TODO: Make sure it doesn't reject an out of order packet. Write the packets
+        to the file after we move the window and have them in order
+        '''
         print 'Received a packet'
         if header.file_name:
             self.file_name = data
@@ -40,6 +44,7 @@ class Server:
             self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
             self.f.close()
         else:
+            print 'Out of order?: {} == {}'.format(header.seqn, self.seqn)
             pass # Either invalid checksum or seqn out of ourder
         self.ack(header, host)
 
