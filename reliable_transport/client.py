@@ -41,17 +41,6 @@ class Client:
     def _selective_repeat(self, filename):
         while True:
             self._send_packets()
-            # if self.seqn < self.window_max:
-                # self._send_packets()
-            # else:
-                # for packet in self.queue[self.window_base:self.window_max]:
-                    # if packet.timeout() or packet.state == FAILED:
-                        # packet.send()
-
-            # elif self.queue[self.window_base].timeout():
-                # for packet in self.queue[self.window_base:self.window_max]:
-                    # packet.state = INIT
-                # self.seqn = self.window_base
 
     def _send_packets(self):
         for pos in range(self.window_base, self.window_max):
@@ -75,23 +64,6 @@ class Client:
             else:
                 break
 
-        # up_seq = False
-        # if self.seqn == len(self.queue):
-        #     data = self.f.read(PACKET_SIZE-Header.size())
-        #     if not data:
-        #         self._finish()
-        #     header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
-        #     packet = Packet(header.formatted + data)
-        #     self.queue.append(packet)
-        #     up_seq = True
-        # else:
-        #     packet = self.queue[self.seqn]
-        #     packet.state = INIT
-        # packet.send(self.udp_connection, self.host, self.port)
-        # self._receive()
-        # if up_seq:
-        #     self.seqn += 1
-
     def _receive(self):
         try:
             data = self.udp_connection.recv(non_blocking=True)
@@ -99,9 +71,6 @@ class Client:
             header = Header.parse(packet[:Header.size()])
             if header.ack:
                 self.queue[self.seqn].state = RECEIVED
-                # self.window_max += (header.seqn-self.window_base)
-                # self.window_base = header.seqn
-                # self.seqn = header.seqn
             else:
                 self.queue[header.seqn].state = FAILED
         except socket.error:
