@@ -8,6 +8,10 @@ class Server:
     def __init__(self, port):
         self.port = port
         self.udp_server = udp.Udp(self.port)
+        self.window_size = WINDOW_SIZE
+        self.window_base = 0
+        self.window_max = self.window_size -1
+        self.write_queue = []
 
     def ack(self, received_header, host, to_ack):
         header = Header(self.seqn, received_header.seqn, WINDOW_SIZE, '', ack=to_ack)
@@ -37,7 +41,7 @@ class Server:
             self.start_time = datetime.datetime.now()
             print 'Opening file {}out'.format(data)
         elif self._validate_checksum(header.checksum, data):
-            self.f.write(data)
+            self._add_to_write_queue(data, header.seqn)
             self.seqn += 1
         elif header.fin:
             print 'finished transmitting file'
@@ -50,6 +54,33 @@ class Server:
 
     def _validate_checksum(self, checksum, data):
         return Header.checksum(data) == checksum
+
+    def _add_to_write_queue(self, data, seqn):
+        for pos in range(self.window_base, self.window_max+1):
+            if len(self.write_queue) < pos:
+                self.write_queue.append(None)
+
+        self.write_queue[seqn] = data
+
+        for pos in range(self.window_base, self.window_max+1):
+            packet = self.write_queue[pos]
+            if packet is None:
+                break
+            else:
+                self.f.write(packet)
+
+        self._advance_window()
+
+    def _advance_window(self):
+        for pos in range(self.window_base, self.window_max+1):
+            packet = self.write_queue[pos]
+            if packet is not None:
+                self.window_base += 1
+                self.window_max += 1
+            else:
+                return
+
+
 
     #########################3
     #  Handshake
