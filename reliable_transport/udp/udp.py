@@ -1,10 +1,15 @@
 import socket
 
+LOCAL = False
+
 class Udp:
     def __init__(self, port, packet_size=500):
         self.packet_size = packet_size
         self.serv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.local_host = socket.gethostname()
+        if LOCAL:
+            self.local_host = socket.gethostname()
+        else:
+            self.local_host = self.get_local_ip()
         self.port = port
 
         self.serv_sock.bind((self.local_host, self.port))
@@ -17,3 +22,8 @@ class Udp:
 
     def send_packet(self, to_send, host, port):
         self.clnt_sock.sendto(to_send, (host, port))
+
+    def get_local_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 0))
+        return s.getsockname()[0]
