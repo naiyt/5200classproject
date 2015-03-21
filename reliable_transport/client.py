@@ -43,8 +43,8 @@ class Client:
             self._send_packets()
 
     def _send_packets(self):
-        for pos in range(self.window_base, self.window_max):
-            if len(self.queue) <= pos:
+        for pos in range(self.window_base, self.window_max+1):
+            if pos >= len(self.queue):
                 data = self.f.read(PACKET_SIZE-Header.size())
                 if not data:
                     self._finish()
@@ -55,7 +55,6 @@ class Client:
             if packet.state not in [RECEIVED, SENT] or packet.timeout():
                 packet.send(self.udp_connection, self.host, self.port)
             self._receive()
-
         self._advance_window()
 
     def _receive(self):
@@ -63,7 +62,7 @@ class Client:
             data = self.udp_connection.recv(non_blocking=True)
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
-            self.queue[self.seqn].state = RECEIVED if header.ack else FAILED
+            self.queue[header.ackn].state = RECEIVED if header.ack else FAILED
         except socket.error:
             pass
 
@@ -79,7 +78,8 @@ class Client:
         ack = self.udp_connection.recv()
 
     def _advance_window(self):
-        for packet in self.queue:
+        for pos in range(self.window_base, self.window_max+1):
+            packet = self.queue[pos]
             if packet.state == RECEIVED:
                 self.window_base += 1
                 self.window_max += 1
