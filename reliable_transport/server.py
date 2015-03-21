@@ -47,6 +47,9 @@ class Server:
             print 'finished transmitting file'
             self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
             self.f.close()
+            self.write_queue = []
+            self.window_base = 0
+            self.window_max = self.window_size -1
         else:
             to_ack = False
         self.ack(header, host, to_ack)
