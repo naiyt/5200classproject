@@ -26,9 +26,10 @@ class Server:
                 self._check_packet(data, header, host)
 
     def _check_packet(self, data, header, host):
+        print 'Received a packet'
         if header.file_name:
             self.file_name = data
-            self.f = open(self.file_name, 'w')
+            self.f = open(self.file_name+'out', 'w')
             self.start_time = datetime.datetime.now()
             print 'Opening file {}out'.format(data)
         elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):

@@ -1,6 +1,6 @@
 import socket
 
-LOCAL = False
+LOCAL = True
 
 class Udp:
     def __init__(self, port, packet_size=500):
