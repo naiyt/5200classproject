@@ -24,7 +24,7 @@ class Packet:
         self.timestamp = time.time()
 
     def timeout(self):
-        if time.time() - self.timestamp > TIMEOUT and self.state != RECEIVED:
+        if time.time() - self.timestamp > TIMEOUT:
             print 'Packet timeout'
             return True
         else:
@@ -42,6 +42,7 @@ class Client:
     def transmit_file(self, filename):
         self._handshake()
         print 'Beginning to transmit file...'
+        self._transmit_filename(filename)
         self.go_back_n(filename)
 
     def go_back_n(self, filename):
@@ -56,6 +57,8 @@ class Client:
                     if self.seqn == len(self.queue):
                         data = f.read(500-Header.size())
                         if not data:
+                            header = Header(self.seqn, 1, self.window_size, '', fin=True)
+                            Packet(header.formatted).send(self.udp_connection, self.host, self.port)
                             print "Final seqn: {}".format(self.seqn)
                             break
                         header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
@@ -87,6 +90,11 @@ class Client:
         except socket.error:
             pass
 
+
+    def _transmit_filename(self, filename):
+        header = Header(0,0, 5, Header.checksum(filename), file_name=True)
+        self.udp_connection.send_packet(header.formatted+filename, self.host, self.port)
+        ack = self.udp_connection.recv()
 
     #########################3
     #  Handshake
