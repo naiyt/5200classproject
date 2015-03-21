@@ -37,6 +37,10 @@ class Client:
         self.packet_size = packet_size
         self.udp_connection = udp.Udp(self.port+1)
         self.window_size = WINDOW_SIZE
+        self.queue = []
+        self.seqn = 0
+        self.seq_base = 0
+        self.seq_max = self.window_size -1
 
     def transmit_file(self, filename):
         self._handshake()
@@ -45,11 +49,6 @@ class Client:
         self.go_back_n(filename)
 
     def go_back_n(self, filename):
-        self.queue = []
-        self.seqn = 0
-        self.seq_base = 0
-        self.seq_max = self.window_size -1
-
         with open(filename, 'r') as f:
             while True:
                 if self.seqn < self.seq_max:

@@ -1,6 +1,7 @@
 import datetime
 from udp import udp
 from header import Header
+import os
 
 STARTING_SEQN = 0
 WINDOW_SIZE = 5
@@ -9,12 +10,6 @@ class Server:
     def __init__(self, port):
         self.port = port
         self.udp_server = udp.Udp(self.port)
-
-    def main_loop(self):
-        while True:
-            start_time = datetime.datetime.now()
-            self.receive_loop()
-            self._calc_throughput(start_time, datetime.datetime.now(), os.path.getsize(filename))
 
     def ack(self, received_header, host):
         header = Header(self.seqn, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
@@ -30,16 +25,29 @@ class Server:
             if header.syn:
                 self._handshake(header, host)
             else:
-                if header.file_name:
-                    self.f = open(data+'out', 'w')
-                    print 'Opening file {}out'.format(data)
-                elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
-                    self.f.write(data)
-                    self.seqn += 1
-                elif header.fin:
-                    self.f.close()
-                    print 'finished transmitting file'
-                self.ack(header, host)
+                self._check_packet(data, header, host)
+
+    def _check_packet(self, data, header, host):
+        if header.file_name:
+            self.file_name = data + 'out'
+            self.f = open(self.file_name, 'w')
+            self.start_time = datetime.datetime.now()
+            print 'Opening file {}out'.format(data)
+        elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
+            self.f.write(data)
+            self.seqn += 1
+        elif header.fin:
+            print 'finished transmitting file'
+            self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
+            self.f.close()
+        else:
+            pass # Either invalid checksum or seqn out of ourder
+        self.ack(header, host)
+
+
+    #########################3
+    #  Handshake
+    #########################3
 
     def _handshake(self, header, host):
         print 'Initiating client handshake...'
@@ -54,9 +62,9 @@ class Server:
     def _wait_for_ack(self):
         ack = self.udp_server.recv()
 
-    def _calc_throughput(self, start_time, end_time, file_size):
+    def _calc_throughput(self, start_time, end_time, file_name):
         time_elapsed = end_time - start_time
-        file_size = os.path.getsize(OUTPUTFILE)
+        file_size = os.path.getsize(file_name)
         throughput = (file_size / 125) / time_elapsed.total_seconds()
         print "Throughput: {} kbps".format(round(throughput, 2))
 

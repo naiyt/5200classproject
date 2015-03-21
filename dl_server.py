@@ -25,4 +25,4 @@ if __name__ == '__main__':
         sys.exit()
 
     server = server.Server(int(server_port))
-    server.main_loop()
+    server.receive_loop()
