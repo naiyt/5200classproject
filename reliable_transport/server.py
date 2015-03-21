@@ -1,10 +1,8 @@
+import os
 import datetime
 from udp import udp
+from defaults import *
 from header import Header
-import os
-
-STARTING_SEQN = 0
-WINDOW_SIZE = 5
 
 class Server:
     def __init__(self, port):
@@ -44,6 +42,8 @@ class Server:
             pass # Either invalid checksum or seqn out of ourder
         self.ack(header, host)
 
+    def _validate_checksum(self, checksum, data):
+        return Header.checksum(data) == checksum
 
     #########################3
     #  Handshake
@@ -67,9 +67,3 @@ class Server:
         file_size = os.path.getsize(file_name)
         throughput = (file_size / 125) / time_elapsed.total_seconds()
         print "Throughput: {} kbps".format(round(throughput, 2))
-
-    def _validate_checksum(self, checksum, data):
-        if Header.checksum(data) != checksum:
-            return False
-        else:
-            return True

@@ -1,17 +1,9 @@
-import socket
-from udp import udp
-from header import Header
-from threading import Thread
 import sys
 import time
-
-STARTING_SEQN = 0
-WINDOW_SIZE = 5
-QUEUE_SIZE = 50
-INIT = 'init'
-SENT = 'sent'
-RECEIVED = 'received'
-TIMEOUT = 1.0
+import socket
+from udp import udp
+from defaults import *
+from header import Header
 
 class Packet:
     def __init__(self, packet):
@@ -24,11 +16,7 @@ class Packet:
         self.timestamp = time.time()
 
     def timeout(self):
-        if time.time() - self.timestamp > TIMEOUT:
-            return True
-        else:
-            return False
-
+        return time.time() - self.timestamp > TIMEOUT
 
 class Client:
     def __init__(self, host, port, packet_size=500):
@@ -39,55 +27,64 @@ class Client:
         self.window_size = WINDOW_SIZE
         self.queue = []
         self.seqn = 0
-        self.seq_base = 0
-        self.seq_max = self.window_size -1
+        self.window_base = 0
+        self.window_max = self.window_size -1
 
     def transmit_file(self, filename):
         self._handshake()
         print 'Beginning to transmit file...'
         self._transmit_filename(filename)
-        self.go_back_n(filename)
-
-    def go_back_n(self, filename):
         with open(filename, 'r') as f:
-            while True:
-                if self.seqn < self.seq_max:
-                    if self.seqn == len(self.queue):
-                        data = f.read(500-Header.size())
-                        if not data:
-                            header = Header(self.seqn, 1, self.window_size, '', fin=True)
-                            Packet(header.formatted).send(self.udp_connection, self.host, self.port)
-                            print 'Finished transfer!'
-                            sys.exit()
-                        header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
-                        packet = Packet(header.formatted + data)
-                        self.queue.append(packet)
-                    else:
-                        packet = self.queue[self.seqn]
-                        packet.state = INIT
-                    packet.send(self.udp_connection, self.host, self.port)
-                    self.receive()
-                    self.seqn += 1
-                elif self.queue[self.seq_base].timeout():
-                    for packet in self.queue[self.seq_base:self.seq_max]:
-                        packet.state = INIT
-                    self.seqn = self.seq_base
+            self.f = f
+            self._go_back_n(filename)
 
-    def receive(self):
+    def _go_back_n(self, filename):
+        while True:
+            if self.seqn < self.window_max:
+                self._send_packets()
+            elif self.queue[self.window_base].timeout():
+                for packet in self.queue[self.window_base:self.window_max]:
+                    packet.state = INIT
+                self.seqn = self.window_base
+
+    def _send_packets(self):
+        up_seq = False
+        if self.seqn == len(self.queue):
+            data = self.f.read(PACKET_SIZE-Header.size())
+            if not data:
+                self._finish()
+            header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
+            packet = Packet(header.formatted + data)
+            self.queue.append(packet)
+            up_seq = True
+        else:
+            packet = self.queue[self.seqn]
+            packet.state = INIT
+        packet.send(self.udp_connection, self.host, self.port)
+        self._receive()
+        if up_seq:
+            self.seqn += 1
+
+    def _receive(self):
         try:
             data = self.udp_connection.recv(non_blocking=True)
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
             if header.ack:
                 self.queue[self.seqn].state = RECEIVED
-                self.seq_max += (header.seqn-self.seq_base)
-                self.seq_base = header.seqn
+                self.window_max += (header.seqn-self.window_base)
+                self.window_base = header.seqn
                 self.seqn = header.seqn
             else:
                 print 'did not ack'
         except socket.error:
             pass
 
+    def _finish(self):
+        header = Header(self.seqn, 1, self.window_size, '', fin=True)
+        Packet(header.formatted).send(self.udp_connection, self.host, self.port)
+        print 'Finished transfer!'
+        sys.exit()
 
     def _transmit_filename(self, filename):
         header = Header(0,0, 5, Header.checksum(filename), file_name=True)
@@ -115,5 +112,5 @@ class Client:
         return header.seqn
 
     def _send_ack(self, received_seqn):
-        header = Header(STARTING_SEQN+1, received_seqn+1, 5, '', ack=True)
+        header = Header(received_seqn+1, 0, 5, '', ack=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)
