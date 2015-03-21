@@ -49,7 +49,6 @@ class Server:
             self.f.close()
         else:
             to_ack = False
-            pass # Either invalid checksum or seqn out of order
         self.ack(header, host, to_ack)
 
     def _validate_checksum(self, checksum, data):
@@ -68,17 +67,8 @@ class Server:
                 break
             else:
                 self.f.write(packet)
-
-        self._advance_window()
-
-    def _advance_window(self):
-        for pos in range(self.window_base, self.window_max+1):
-            packet = self.write_queue[pos]
-            if packet is not None:
-                self.window_base += 1
-                self.window_max += 1
-            else:
-                return
+                self.window_base +=1
+                self.window_max +=1
 
 
 
