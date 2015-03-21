@@ -39,9 +39,6 @@ class Server:
                 elif header.fin:
                     self.f.close()
                     print 'finished transmitting file'
-                # else:
-                    # print "got {}, wanted {}".format(header.seqn, self.seqn)
-                    # print 'bad packet, going back n'
                 self.ack(header, host)
 
     def _handshake(self, header, host):
@@ -51,14 +48,11 @@ class Server:
         self._wait_for_ack()
 
     def _send_syn_ack(self, header, host):
-        print 'Sending syn-ack...'
         header = Header(self.seqn, header.seqn+1, header.window_size, '', syn=True, ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def _wait_for_ack(self):
-        print 'Waiting for client ack...'
         ack = self.udp_server.recv()
-        print 'Client ack received'
 
     def _calc_throughput(self, start_time, end_time, file_size):
         time_elapsed = end_time - start_time

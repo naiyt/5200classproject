@@ -25,7 +25,6 @@ class Packet:
 
     def timeout(self):
         if time.time() - self.timestamp > TIMEOUT:
-            print 'Packet timeout'
             return True
         else:
             return False
@@ -59,8 +58,8 @@ class Client:
                         if not data:
                             header = Header(self.seqn, 1, self.window_size, '', fin=True)
                             Packet(header.formatted).send(self.udp_connection, self.host, self.port)
-                            print "Final seqn: {}".format(self.seqn)
-                            break
+                            print 'Finished transfer!'
+                            sys.exit()
                         header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
                         packet = Packet(header.formatted + data)
                         self.queue.append(packet)
@@ -106,20 +105,16 @@ class Client:
         self._send_ack(received_seqn)
 
     def _send_syn(self):
-        print 'Sending syn...'
         header = Header(STARTING_SEQN, 0, 5, '', syn=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)
 
     def _wait_for_syn_ack(self):
-        print 'Waiting for syn-ack from server...'
         syn_ack = self.udp_connection.recv()[0]
         header = Header.parse(syn_ack[:Header.size()])
         if header.syn is False or header.ack is False:
             raise Exception('The server did not respond with a SYN-ACK')
-        print 'syn-ack received...'
         return header.seqn
 
     def _send_ack(self, received_seqn):
-        print 'Sending final ack to server...'
         header = Header(STARTING_SEQN+1, received_seqn+1, 5, '', ack=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)
