@@ -63,8 +63,7 @@ class Client:
             data = self.udp_connection.recv(non_blocking=True)
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
-            print header.seqn
-            self.queue[header.seqn].state = RECEIVED if header.ack else FAILED
+            self.queue[self.seqn].state = RECEIVED if header.ack else FAILED
         except socket.error:
             pass
 

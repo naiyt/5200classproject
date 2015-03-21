@@ -9,8 +9,8 @@ class Server:
         self.port = port
         self.udp_server = udp.Udp(self.port)
 
-    def ack(self, received_header, host):
-        header = Header(self.seqn, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
+    def ack(self, received_header, host, to_ack):
+        header = Header(self.seqn, received_header.ackn+1, WINDOW_SIZE, '', ack=to_ack)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
@@ -31,6 +31,7 @@ class Server:
         to the file after we move the window and have them in order
         '''
         print 'Received a packet'
+        to_ack = True
         if header.file_name:
             self.file_name = data
             self.f = open(self.file_name+'out', 'w')
@@ -45,8 +46,9 @@ class Server:
             self.f.close()
         else:
             print 'Out of order?: {} == {}'.format(header.seqn, self.seqn)
+            to_ack = False
             pass # Either invalid checksum or seqn out of ourder
-        self.ack(header, host)
+        self.ack(header, host, to_ack)
 
     def _validate_checksum(self, checksum, data):
         return Header.checksum(data) == checksum
