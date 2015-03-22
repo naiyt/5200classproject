@@ -33,7 +33,10 @@ class Server:
         to_ack = True
         if header.file_name:
             self.file_name = data
-            self.f = open(self.file_name+'out', 'w')
+            if LOCAL:
+                self.f = open(self.file_name+'out', 'w')
+            else:
+                self.f = open(self.file_name, 'w')
             self.start_time = datetime.datetime.now()
             print 'Opening file {}'.format(data)
         elif self._validate_checksum(header.checksum, data):

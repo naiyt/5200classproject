@@ -7,4 +7,4 @@ RECEIVED = 'received'
 FAILED = 'failed'
 TIMEOUT = 1.0
 PACKET_SIZE = 500
-LOCAL = True
+LOCAL = False
