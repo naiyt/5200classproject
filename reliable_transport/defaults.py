@@ -6,3 +6,4 @@ SENT = 'sent'
 RECEIVED = 'received'
 TIMEOUT = 1.0
 PACKET_SIZE = 500
+LOCAL = False
