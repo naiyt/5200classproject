@@ -28,7 +28,10 @@ class Server:
     def _check_packet(self, data, header, host):
         if header.file_name:
             self.file_name = data
-            self.f = open(self.file_name, 'w')
+            if LOCAL:
+                self.f = open(self.file_name+'out', 'w')
+            else:
+                self.f = open(self.file_name, 'w')
             self.start_time = datetime.datetime.now()
             print 'Opening file {}out'.format(data)
         elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
