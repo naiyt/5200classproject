@@ -10,7 +10,7 @@ class Server:
         self.udp_server = udp.Udp(self.port)
 
     def ack(self, received_header, host):
-        header = Header(self.seqn, received_header.ackn+1, WINDOW_SIZE, '', ack=True)
+        header = Header(self.seqn, received_header.seqn+1, WINDOW_SIZE, '', ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
