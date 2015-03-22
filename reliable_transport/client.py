@@ -81,6 +81,7 @@ class Client:
         for pos in range(self.window_base, self.window_max+1):
             packet = self.queue[pos]
             if packet.state == RECEIVED:
+                self.queue[pos] = None
                 self.window_base += 1
                 self.window_max += 1
             else:

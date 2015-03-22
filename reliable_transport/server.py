@@ -33,7 +33,7 @@ class Server:
         to_ack = True
         if header.file_name:
             self.file_name = data
-            self.f = open(self.file_name, 'w')
+            self.f = open(self.file_name+'out', 'w')
             self.start_time = datetime.datetime.now()
             print 'Opening file {}'.format(data)
         elif self._validate_checksum(header.checksum, data):
@@ -66,6 +66,7 @@ class Server:
                 break
             else:
                 self.f.write(packet)
+                self.write_queue[pos] = None
                 self.window_base +=1
                 self.window_max +=1
 
