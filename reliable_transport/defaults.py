@@ -5,6 +5,6 @@ INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
 FAILED = 'failed'
-TIMEOUT = 0.120
+TIMEOUT = 0.200
 PACKET_SIZE = 400
 LOCAL = True
