@@ -43,7 +43,6 @@ class Client:
     def _go_back_n(self, filename):
         while True:
             if self.win_pos in range(self.window_base, self.window_max+1):
-                print self.win_pos
                 self._send_packets()
             elif self.queue[self.window_base].timeout():
                 for packet in self.queue[self.window_base:self.window_max]:
