@@ -30,6 +30,7 @@ class Client:
         self.window_base = 0
         self.window_max = self.window_size -1
         self.ftp_pos = 0
+        self.win_pos = 0
 
     def transmit_file(self, filename):
         self._handshake()
@@ -41,41 +42,43 @@ class Client:
 
     def _go_back_n(self, filename):
         while True:
-            if self.ftp_pos <= self.window_max and self.ftp_pos >= self.window_base: # in range(self.window_base, self.window_max+1):
+            if self.win_pos in range(self.window_base, self.window_max+1):
+                print self.win_pos
                 self._send_packets()
             elif self.queue[self.window_base].timeout():
                 for packet in self.queue[self.window_base:self.window_max]:
                     packet.state = INIT
-                # print 'resetting'
-                # self.ftp_pos = self.window_base
+                self.win_pos = self.window_base
 
     def _send_packets(self):
         up_seq = False
-        if self.ftp_pos == len(self.queue):
+        if self.win_pos == len(self.queue):
             data = self.f.read(PACKET_SIZE)
             if not data:
                 self._finish()
-            header = Header(self.seqn, self.received_seqn, self.ftp_pos, self.window_size, Header.checksum(data), ftp=True)
+            header = Header(self.seqn, self.received_seqn, self.win_pos, self.window_size, Header.checksum(data), ftp=True)
             packet = Packet(header.formatted + data)
             self.queue.append(packet)
             up_seq = True
         else:
-            packet = self.queue[self.ftp_pos]
+            packet = self.queue[self.win_pos]
             packet.state = INIT
         packet.send(self.udp_connection, self.host, self.port)
         self._receive()
+        if up_seq:
+            self.win_pos += 1
 
     def _receive(self):
         try:
             data = self.udp_connection.recv(non_blocking=True)
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
+            self.window_max += (header.ftp_pos-self.window_base)
+            self.window_base = header.ftp_pos
+            self.ftp_pos = header.ftp_pos
+            self.win_pos = self.ftp_pos
             if header.ack:
                 self.queue[self.ftp_pos-1].state = RECEIVED
-                self.window_max += (header.ftp_pos-self.window_base)
-                self.window_base = header.ftp_pos
-                self.seqn = header.seqn
-                self.ftp_pos = header.ftp_pos
         except socket.error:
             pass
 
