@@ -4,6 +4,6 @@ QUEUE_SIZE = 50
 INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
-TIMEOUT = 1.0
+TIMEOUT = 0.12
 PACKET_SIZE = 400
 LOCAL = True
