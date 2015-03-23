@@ -41,17 +41,18 @@ class Client:
 
     def _go_back_n(self, filename):
         while True:
-            if self.seqn < self.window_max:
+            if self.ftp_pos <= self.window_max and self.ftp_pos >= self.window_base: # in range(self.window_base, self.window_max+1):
                 self._send_packets()
             elif self.queue[self.window_base].timeout():
                 for packet in self.queue[self.window_base:self.window_max]:
                     packet.state = INIT
-                self.seqn = self.window_base
+                # print 'resetting'
+                # self.ftp_pos = self.window_base
 
     def _send_packets(self):
         up_seq = False
         if self.ftp_pos == len(self.queue):
-            data = self.f.read(PACKET_SIZE-Header.size())
+            data = self.f.read(PACKET_SIZE)
             if not data:
                 self._finish()
             header = Header(self.seqn, self.received_seqn, self.ftp_pos, self.window_size, Header.checksum(data), ftp=True)
@@ -59,13 +60,10 @@ class Client:
             self.queue.append(packet)
             up_seq = True
         else:
-            print self.ftp_pos
             packet = self.queue[self.ftp_pos]
             packet.state = INIT
         packet.send(self.udp_connection, self.host, self.port)
         self._receive()
-        if up_seq:
-            self.ftp_pos += 1
 
     def _receive(self):
         try:
@@ -73,9 +71,9 @@ class Client:
             packet = data[0]
             header = Header.parse(packet[:Header.size()])
             if header.ack:
-                self.queue[self.seqn].state = RECEIVED
-                self.window_max += (header.seqn-self.window_base)
-                self.window_base = header.seqn
+                self.queue[self.ftp_pos-1].state = RECEIVED
+                self.window_max += (header.ftp_pos-self.window_base)
+                self.window_base = header.ftp_pos
                 self.seqn = header.seqn
                 self.ftp_pos = header.ftp_pos
         except socket.error:

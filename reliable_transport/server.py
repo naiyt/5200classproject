@@ -10,8 +10,8 @@ class Server:
         self.udp_server = udp.Udp(self.port)
         self.ftp_pos = 0
 
-    def ack(self, received_header, host):
-        header = Header(self.seqn, received_header.seqn+self.data_len, received_header.ftp_pos, WINDOW_SIZE, '')
+    def ack(self, received_header, host, to_ack):
+        header = Header(self.seqn, received_header.seqn+self.data_len, self.ftp_pos, WINDOW_SIZE, '', ack=to_ack)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
@@ -28,7 +28,7 @@ class Server:
                 self._check_packet(data, header, host)
 
     def _check_packet(self, data, header, host):
-        # print 'header: {}, self: {}'.format(header.ftp_pos, self.ftp_pos)
+        to_ack = False
         if header.file_name:
             self.file_name = data
             if LOCAL:
@@ -40,13 +40,15 @@ class Server:
         elif header.ftp_pos == self.ftp_pos and self._validate_checksum(header.checksum, data):
             self.f.write(data)
             self.ftp_pos += 1
+            to_ack = True
         elif header.fin:
             print 'finished transmitting file'
             self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
             self.f.close()
+            self.ftp_pos = 0
         else:
             pass # Either invalid checksum or seqn out of ourder
-        self.ack(header, host)
+        self.ack(header, host, to_ack)
 
     def _validate_checksum(self, checksum, data):
         return Header.checksum(data) == checksum
