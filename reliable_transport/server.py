@@ -60,7 +60,7 @@ class Server:
 
     def _add_to_write_queue(self, data, n_pos):
         for pos in range(self.window_base, self.window_max+1):
-            if len(self.write_queue) < pos:
+            if len(self.write_queue) <= pos:
                 self.write_queue.append(None)
 
         self.write_queue[n_pos] = data
