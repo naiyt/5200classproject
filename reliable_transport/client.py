@@ -29,6 +29,7 @@ class Client:
         self.seqn = 0
         self.window_base = 0
         self.window_max = self.window_size -1
+        self.ftp_pos = 0
 
     def transmit_file(self, filename):
         self._handshake()
@@ -49,21 +50,22 @@ class Client:
 
     def _send_packets(self):
         up_seq = False
-        if self.seqn == len(self.queue):
+        if self.ftp_pos == len(self.queue):
             data = self.f.read(PACKET_SIZE-Header.size())
             if not data:
                 self._finish()
-            header = Header(self.seqn, 1, self.window_size, Header.checksum(data))
+            header = Header(self.seqn, self.received_seqn, self.ftp_pos, self.window_size, Header.checksum(data), ftp=True)
             packet = Packet(header.formatted + data)
             self.queue.append(packet)
             up_seq = True
         else:
-            packet = self.queue[self.seqn]
+            print self.ftp_pos
+            packet = self.queue[self.ftp_pos]
             packet.state = INIT
         packet.send(self.udp_connection, self.host, self.port)
         self._receive()
         if up_seq:
-            self.seqn += 1
+            self.ftp_pos += 1
 
     def _receive(self):
         try:
@@ -75,19 +77,18 @@ class Client:
                 self.window_max += (header.seqn-self.window_base)
                 self.window_base = header.seqn
                 self.seqn = header.seqn
-            else:
-                print 'did not ack'
+                self.ftp_pos = header.ftp_pos
         except socket.error:
             pass
 
     def _finish(self):
-        header = Header(self.seqn, 1, self.window_size, '', fin=True)
+        header = Header(self.seqn, 1, 0, self.window_size, '', fin=True)
         Packet(header.formatted).send(self.udp_connection, self.host, self.port)
         print 'Finished transfer!'
         sys.exit()
 
     def _transmit_filename(self, filename):
-        header = Header(0,0, 5, Header.checksum(filename), file_name=True)
+        header = Header(self.seqn, self.received_seqn, 0, self.window_size, Header.checksum(filename), file_name=True)
         self.udp_connection.send_packet(header.formatted+filename, self.host, self.port)
         ack = self.udp_connection.recv()
 
@@ -101,16 +102,18 @@ class Client:
         self._send_ack(received_seqn)
 
     def _send_syn(self):
-        header = Header(STARTING_SEQN, 0, 5, '', syn=True)
+        header = Header(STARTING_SEQN, 0, 0, self.window_size, '', syn=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)
 
     def _wait_for_syn_ack(self):
         syn_ack = self.udp_connection.recv()[0]
         header = Header.parse(syn_ack[:Header.size()])
+        self.received_seqn = header.seqn
         if header.syn is False or header.ack is False:
             raise Exception('The server did not respond with a SYN-ACK')
         return header.seqn
 
     def _send_ack(self, received_seqn):
-        header = Header(received_seqn+1, 0, 5, '', ack=True)
+        self.seqn += 1
+        header = Header(self.seqn, received_seqn+1, 0, self.window_size, '', ack=True)
         self.udp_connection.send_packet(header.formatted, self.host, self.port)

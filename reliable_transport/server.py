@@ -8,9 +8,10 @@ class Server:
     def __init__(self, port):
         self.port = port
         self.udp_server = udp.Udp(self.port)
+        self.ftp_pos = 0
 
     def ack(self, received_header, host):
-        header = Header(self.seqn, received_header.seqn+1, WINDOW_SIZE, '', ack=True)
+        header = Header(self.seqn, received_header.seqn+self.data_len, received_header.ftp_pos, WINDOW_SIZE, '')
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
@@ -20,12 +21,14 @@ class Server:
             host = data[1][0]
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
+            self.data_len = len(data)
             if header.syn:
                 self._handshake(header, host)
             else:
                 self._check_packet(data, header, host)
 
     def _check_packet(self, data, header, host):
+        # print 'header: {}, self: {}'.format(header.ftp_pos, self.ftp_pos)
         if header.file_name:
             self.file_name = data
             if LOCAL:
@@ -34,9 +37,9 @@ class Server:
                 self.f = open(self.file_name, 'w')
             self.start_time = datetime.datetime.now()
             print 'Opening file {}out'.format(data)
-        elif header.seqn == self.seqn and self._validate_checksum(header.checksum, data):
+        elif header.ftp_pos == self.ftp_pos and self._validate_checksum(header.checksum, data):
             self.f.write(data)
-            self.seqn += 1
+            self.ftp_pos += 1
         elif header.fin:
             print 'finished transmitting file'
             self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
@@ -59,7 +62,7 @@ class Server:
         self._wait_for_ack()
 
     def _send_syn_ack(self, header, host):
-        header = Header(self.seqn, header.seqn+1, header.window_size, '', syn=True, ack=True)
+        header = Header(self.seqn, header.seqn+1, 0, header.window_size, '', syn=True, ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def _wait_for_ack(self):

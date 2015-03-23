@@ -5,5 +5,5 @@ INIT = 'init'
 SENT = 'sent'
 RECEIVED = 'received'
 TIMEOUT = 1.0
-PACKET_SIZE = 500
-LOCAL = False
+PACKET_SIZE = 400
+LOCAL = True
