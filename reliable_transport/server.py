@@ -3,6 +3,7 @@ import datetime
 from udp import udp
 from defaults import *
 from header import Header
+import math
 
 class Server:
     def __init__(self, port):
@@ -14,7 +15,7 @@ class Server:
         self.write_queue = []
 
     def ack(self, received_header, host, to_ack):
-        header = Header(self.seqn, received_header.seqn, WINDOW_SIZE, '', ack=to_ack)
+        header = Header(self.seqn, received_header.seqn+self.data_len, received_header.ftp_pos, WINDOW_SIZE, '', ack=to_ack)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
@@ -24,6 +25,7 @@ class Server:
             host = data[1][0]
             header = Header.parse(packet[:Header.size()])
             data = packet[Header.size():]
+            self.data_len = len(data)
             if header.syn:
                 self._handshake(header, host)
             else:
@@ -40,7 +42,7 @@ class Server:
             self.start_time = datetime.datetime.now()
             print 'Opening file {}'.format(data)
         elif self._validate_checksum(header.checksum, data):
-            self._add_to_write_queue(data, header.seqn)
+            self._add_to_write_queue(data, header.ftp_pos)
             self.seqn += 1
         elif header.fin:
             print 'finished transmitting file'
@@ -56,12 +58,12 @@ class Server:
     def _validate_checksum(self, checksum, data):
         return Header.checksum(data) == checksum
 
-    def _add_to_write_queue(self, data, seqn):
+    def _add_to_write_queue(self, data, n_pos):
         for pos in range(self.window_base, self.window_max+1):
             if len(self.write_queue) < pos:
                 self.write_queue.append(None)
 
-        self.write_queue[seqn] = data
+        self.write_queue[n_pos] = data
 
         for pos in range(self.window_base, self.window_max+1):
             packet = self.write_queue[pos]
@@ -86,7 +88,7 @@ class Server:
         self._wait_for_ack()
 
     def _send_syn_ack(self, header, host):
-        header = Header(self.seqn, header.seqn+1, header.window_size, '', syn=True, ack=True)
+        header = Header(self.seqn, header.seqn+1, 0, header.window_size, '', syn=True, ack=True)
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def _wait_for_ack(self):
