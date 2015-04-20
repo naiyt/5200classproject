@@ -1,4 +1,4 @@
-from factory import Factory
+from rpc.factory import Factory
 
 factory = Factory()
 server = factory.get_proxy()
