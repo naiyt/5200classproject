@@ -22,7 +22,7 @@ class Proxy(Interface):
         return self.marshaller.unmarshal(data)
 
     def _transmit(self, data):
-        self.client.transmit_file(data)
+        self.client.transmit_data(data)
         return server.receive_loop()
 
     def _create_stubs(self):
