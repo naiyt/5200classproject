@@ -6,5 +6,5 @@ class Factory:
 
     def get_proxy(self):
         if self.proxy is None:
-            self.proxy = Proxy('localhost', 9999)
+            self.proxy = Proxy('localhost', 1234)
         return self.proxy
