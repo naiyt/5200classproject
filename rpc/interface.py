@@ -6,7 +6,6 @@ class Interface:
         for method in methods:
             self.req_ids[method] = num
             num += 1
-        print self.req_ids
 
     def add(self, a, b):
         raise NotImplementedError()

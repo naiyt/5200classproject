@@ -17,7 +17,7 @@ class Proxy(Interface):
         self.server = server.Server(self.port+10)
 
     def get_remote_answer(self, meth_name, *args):
-        marshalled = self.marshaller.marshal(self.req_ids[meth_name], args)
+        marshalled = self.marshaller.marshal(self.req_ids[meth_name], *args)
         data = self._transmit(marshalled)
         return self.marshaller.unmarshal(data)
 
