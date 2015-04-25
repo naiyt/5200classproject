@@ -31,22 +31,29 @@ class Client:
         self.window_base = 0
         self.window_max = self.window_size -1
 
+    def transmit_data(self, data):
+        self._handshake()
+        print 'Beginning to transmit data...'
+        self.data = data
+        self._selective_repeat()
+
     def transmit_file(self, filename):
         self._handshake()
         print 'Beginning to transmit file...'
         self._transmit_filename(filename)
         with open(filename, 'r') as f:
             self.f = f
-            self._selective_repeat(filename)
+            self._selective_repeat()
 
-    def _selective_repeat(self, filename):
+    def _selective_repeat(self):
         while True:
             self._send_packets()
 
     def _send_packets(self):
         for pos in range(self.window_base, self.window_max+1):
             if pos >= len(self.queue):
-                data = self.f.read(PACKET_SIZE) #-Header.size())
+                data = self.data[:500]
+                self.data = self.data[500:]
                 if not data:
                     self._finish()
                 header = Header(self.seqn, self.received_seqn, pos, self.window_size, Header.checksum(data), ftp=True)
