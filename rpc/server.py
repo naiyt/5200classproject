@@ -1,22 +1,23 @@
 from interface import Interface
 from marshaller import Marshal
+from reliable_transport import server
 
 class MethodImplementations(Interface):
-    @staticmethod
     def add(a, b):
         return a + b
 
-    @staticmethod
     def subtract(a, b):
         return a - b
 
 class Server:
-    def __init__(self):
+    def __init__(self, port):
         self.methods = MethodImplementations()
         self._register_methods()
         self.marshal = Marshal()
+        self.server = server.Server(port)
 
     def receive(self):
+        self.server.receive_loop()
         data = ('add', 1, 1)
         return self._call(data[0], *data[1:])
 
@@ -36,5 +37,5 @@ class Server:
         for method in methods:
             self.method_impls[method] = getattr(self.methods, method)
 
-server = Server()
-print server.receive()
+server = Server(1234)
+server.receive()
