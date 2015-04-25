@@ -11,7 +11,7 @@ class MethodImplementations(Interface):
         return a - b
 
 class Server:
-    def __init__(self, address, port):
+    def __init__(self, port, address):
         self.methods = MethodImplementations()
         self._register_methods()
         self.marshal = Marshal()
