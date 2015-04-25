@@ -21,6 +21,7 @@ class Server:
     def receive(self):
         data = self.server.receive_loop()
         data = self._unmarshal(data)
+        print data
         # data = ('add', 1, 1)
         return self._call(data[0], *data[1:]) # data[0] is the func, the rest of the arr is the args
 

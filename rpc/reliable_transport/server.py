@@ -19,7 +19,8 @@ class Server:
         self.udp_server.send_packet(header.formatted, host, self.port+1)
 
     def receive_loop(self):
-        while True:
+        msg_received = False
+        while msg_received is False:
             data = self.udp_server.recv()
             packet = data[0]
             host = data[1][0]
@@ -29,7 +30,9 @@ class Server:
             if header.syn:
                 self._handshake(header, host)
             else:
-                self._check_packet(data, header, host)
+                msg_received = self._check_packet(data, header, host)
+        msg = [x for x in msg_received if x is not None]
+        return ''.join(msg)
 
     def _check_packet(self, data, header, host):
         to_ack = True
@@ -45,15 +48,16 @@ class Server:
             self._add_to_write_queue(data, header.ftp_pos)
             self.seqn += 1
         elif header.fin:
-            print 'finished transmitting file'
-            self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
-            self.f.close()
-            self.write_queue = []
+            # self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
+            # self.f.close()
+            # self.write_queue = []
             self.window_base = 0
             self.window_max = self.window_size -1
+            return self.write_queue
         else:
             to_ack = False
         self.ack(header, host, to_ack)
+        return False
 
     def _validate_checksum(self, checksum, data):
         return Header.checksum(data) == checksum
@@ -65,15 +69,15 @@ class Server:
 
         self.write_queue[n_pos] = data
 
-        for pos in range(self.window_base, self.window_max+1):
-            packet = self.write_queue[pos]
-            if packet is None:
-                break
-            else:
-                self.f.write(packet)
-                self.write_queue[pos] = None
-                self.window_base +=1
-                self.window_max +=1
+        # for pos in range(self.window_base, self.window_max+1):
+            # packet = self.write_queue[pos]
+            # if packet is None:
+            #     break
+            # else:
+            #     self.f.write(packet)
+            #     self.write_queue[pos] = None
+            #     self.window_base +=1
+            #     self.window_max +=1
 
 
 
@@ -82,7 +86,6 @@ class Server:
     #########################3
 
     def _handshake(self, header, host):
-        print 'Initiating client handshake...'
         self.seqn = header.seqn
         self._send_syn_ack(header, host)
         self._wait_for_ack()
@@ -94,8 +97,8 @@ class Server:
     def _wait_for_ack(self):
         ack = self.udp_server.recv()
 
-    def _calc_throughput(self, start_time, end_time, file_name):
-        time_elapsed = end_time - start_time
-        file_size = os.path.getsize(file_name)
-        throughput = (file_size / 125) / time_elapsed.total_seconds()
-        print "Throughput: {} kbps".format(round(throughput, 2))
+    # def _calc_throughput(self, start_time, end_time, file_name):
+    #     time_elapsed = end_time - start_time
+    #     file_size = os.path.getsize(file_name)
+    #     throughput = (file_size / 125) / time_elapsed.total_seconds()
+    #     print "Throughput: {} kbps".format(round(throughput, 2))
