@@ -18,9 +18,9 @@ class Server:
 
     def receive(self):
         data = self.server.receive_loop()
-        unmarshalled = self._unmarshal(data)
-        args = self._set_arg_types(unmarshalled['args'], unmarshalled['sig'])
-        return self._call(unmarshalled['name'], *args), unmarshalled
+        skeleton = self._unmarshal(data)
+        args = self._set_arg_types(skeleton['args'], skeleton['sig'])
+        return self._call(skeleton['name'], *args), skeleton
 
     def send(self, result, um):
         marshalled = self.marshal.marshal(um['name'], um['id'], um['sig'], um['args'], result)

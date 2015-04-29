@@ -5,6 +5,7 @@ from interface import Interface
 from marshaller import Marshal
 from reliable_transport import client
 from reliable_transport import server
+from socket import error as socket_error
 
 class Proxy(Interface):
     def __init__(self, address, port):
@@ -25,8 +26,12 @@ class Proxy(Interface):
         return self.marshaller.unmarshal(data)['result']
 
     def _transmit(self, data):
-        self.client.transmit_data(data)
-        return self.server.receive_loop()
+        try:
+            self.client.transmit_data(data)
+            res = self.server.receive_loop()
+        except socket_error:
+            return self._transmit(data)
+        return res
 
     def _init_funcs(self):
         stubs = {}
