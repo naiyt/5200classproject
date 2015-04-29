@@ -11,6 +11,11 @@ class Server:
         self.server = server.Server(port)
         self.client = client.Client(address, port+10)
 
+    def run(self):
+        while True:
+            result, unmarshalled = self.receive()
+            self.send(result, unmarshalled)
+
     def receive(self):
         data = self.server.receive_loop()
         unmarshalled = self._unmarshal(data)
@@ -47,9 +52,3 @@ class Server:
         self.method_impls = {}
         for method in methods:
             self.method_impls[method] = getattr(self.methods, method)
-
-server = Server(1234, 'localhost')
-
-while True:
-    result, unmarshalled = server.receive()
-    server.send(result, unmarshalled)
