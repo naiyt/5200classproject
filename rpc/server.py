@@ -19,7 +19,6 @@ class Server:
 
     def send(self, result, um):
         marshalled = self.marshal.marshal(um['name'], um['id'], um['sig'], um['args'], result)
-        print marshalled
         self.client.transmit_data(marshalled)
 
     def _set_arg_types(self, args, sig):
@@ -40,6 +39,7 @@ class Server:
         return self.marshal.unmarshal(data)
 
     def _call(self, meth_name, *args):
+        print 'Received request for function "{}", executing now'.format(meth_name)
         return self.method_impls[meth_name](*args)
 
     def _register_methods(self):

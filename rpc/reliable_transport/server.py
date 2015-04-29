@@ -43,17 +43,15 @@ class Server:
             else:
                 self.f = open(self.file_name, 'w')
             self.start_time = datetime.datetime.now()
-            print 'Opening file {}'.format(data)
         elif self._validate_checksum(header.checksum, data):
             self._add_to_write_queue(data, header.ftp_pos)
             self.seqn += 1
         elif header.fin:
-            # self._calc_throughput(self.start_time, datetime.datetime.now(), self.file_name)
-            # self.f.close()
-            # self.write_queue = []
             self.window_base = 0
             self.window_max = self.window_size -1
-            return self.write_queue
+            ans = self.write_queue
+            self.write_queue = []
+            return ans
         else:
             to_ack = False
         self.ack(header, host, to_ack)
@@ -68,17 +66,6 @@ class Server:
                 self.write_queue.append(None)
 
         self.write_queue[n_pos] = data
-
-        # for pos in range(self.window_base, self.window_max+1):
-            # packet = self.write_queue[pos]
-            # if packet is None:
-            #     break
-            # else:
-            #     self.f.write(packet)
-            #     self.write_queue[pos] = None
-            #     self.window_base +=1
-            #     self.window_max +=1
-
 
 
     #########################3
@@ -96,9 +83,3 @@ class Server:
 
     def _wait_for_ack(self):
         ack = self.udp_server.recv()
-
-    # def _calc_throughput(self, start_time, end_time, file_name):
-    #     time_elapsed = end_time - start_time
-    #     file_size = os.path.getsize(file_name)
-    #     throughput = (file_size / 125) / time_elapsed.total_seconds()
-    #     print "Throughput: {} kbps".format(round(throughput, 2))

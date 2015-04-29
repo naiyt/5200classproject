@@ -78,7 +78,7 @@ class Client:
     def _finish(self):
         header = Header(self.seqn, 1, 0, self.window_size, '', fin=True)
         Packet(header.formatted).send(self.udp_connection, self.host, self.port)
-        # sys.exit()
+        self.queue = []
 
     def _transmit_filename(self, filename):
         header = Header(self.seqn, self.received_seqn, 0, self.window_size, Header.checksum(filename), file_name=True)
@@ -111,8 +111,8 @@ class Client:
         syn_ack = self.udp_connection.recv()[0]
         header = Header.parse(syn_ack[:Header.size()])
         self.received_seqn = header.seqn
-        if header.syn is False or header.ack is False:
-            raise Exception('The server did not respond with a SYN-ACK')
+        # if header.syn is False or header.ack is False:
+            # raise Exception('The server did not respond with a SYN-ACK')
         return header.seqn
 
     def _send_ack(self, received_seqn):
