@@ -31,14 +31,15 @@ class Proxy(Interface):
     def _init_funcs(self):
         stubs = {}
         for name, method in self.methods.iteritems():
-            stubs[name] = Stub(name,  method['sig'], self)
+            stubs[name] = Stub(name,  method['sig'], method['return'], self)
             setattr(self, name, stubs[name].create_stub)
 
 class Stub:
-    def __init__(self, method_name, signature, proxy):
+    def __init__(self, method_name, signature, return_type, proxy):
         self.method_name = method_name
         self.signature = signature
         self.proxy = proxy
+        self.return_type = return_type
 
     def create_stub(self, *args):
         self.args = args
@@ -47,4 +48,11 @@ class Stub:
         return self.receive_answer()
 
     def receive_answer(self):
-        return self.proxy.get_remote_answer(self.method_name, self.signature, self.req_id, self.args)
+        answer = self.proxy.get_remote_answer(self.method_name, self.signature, self.req_id, self.args)
+        if self.return_type == 'int':
+            answer = int(answer)
+        elif self.return_type == 'float':
+            answer = int(answer)
+        elif self.return_type == 'bool':
+            answer = bool(answer)
+        return answer
