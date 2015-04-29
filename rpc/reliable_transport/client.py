@@ -33,29 +33,24 @@ class Client:
 
     def transmit_data(self, data):
         self._handshake()
-        print 'Beginning to transmit data...'
         self.data = data
         self._selective_repeat()
 
-    def transmit_file(self, filename):
-        self._handshake()
-        print 'Beginning to transmit file...'
-        self._transmit_filename(filename)
-        with open(filename, 'r') as f:
-            self.f = f
-            self._selective_repeat()
-
     def _selective_repeat(self):
-        while True:
-            self._send_packets()
+        repeating = True
+        while repeating:
+            repeating = self._send_packets()
 
     def _send_packets(self):
+        finished = False
         for pos in range(self.window_base, self.window_max+1):
             if pos >= len(self.queue):
                 data = self.data[:500]
                 self.data = self.data[500:]
                 if not data:
                     self._finish()
+                    finished = True
+                    break
                 header = Header(self.seqn, self.received_seqn, pos, self.window_size, Header.checksum(data), ftp=True)
                 packet = Packet(header.formatted+data)
                 self.seqn += len(data)
@@ -64,7 +59,10 @@ class Client:
             if packet.state not in [RECEIVED, SENT] or packet.timeout():
                 packet.send(self.udp_connection, self.host, self.port)
             self._receive()
-        self._advance_window()
+        if finished is False:
+            self._advance_window()
+        else:
+            return False
 
     def _receive(self):
         try:
@@ -80,8 +78,7 @@ class Client:
     def _finish(self):
         header = Header(self.seqn, 1, 0, self.window_size, '', fin=True)
         Packet(header.formatted).send(self.udp_connection, self.host, self.port)
-        print 'Finished transfer!'
-        sys.exit()
+        # sys.exit()
 
     def _transmit_filename(self, filename):
         header = Header(self.seqn, self.received_seqn, 0, self.window_size, Header.checksum(filename), file_name=True)
@@ -102,7 +99,6 @@ class Client:
     #  Handshake
     #########################3
     def _handshake(self):
-        print 'Starting handshake...'
         self._send_syn()
         received_seqn = self._wait_for_syn_ack()
         self._send_ack(received_seqn)

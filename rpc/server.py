@@ -1,14 +1,7 @@
-from interface import Interface
 from marshaller import Marshal
 from reliable_transport import server
 from reliable_transport import client
-
-class MethodImplementations(Interface):
-    def add(a, b):
-        return a + b
-
-    def subtract(a, b):
-        return a - b
+from method_implementations import MethodImplementations
 
 class Server:
     def __init__(self, port, address):
@@ -20,20 +13,34 @@ class Server:
 
     def receive(self):
         data = self.server.receive_loop()
-        data = self._unmarshal(data)
-        print data
-        # data = ('add', 1, 1)
-        return self._call(data[0], *data[1:]) # data[0] is the func, the rest of the arr is the args
+        unmarshalled = self._unmarshal(data)
+        args = self._set_arg_types(unmarshalled['args'], unmarshalled['sig'])
+        return self._call(unmarshalled['name'], *args), unmarshalled
+
+    def send(self, result, um):
+        marshalled = self.marshal.marshal(um['name'], um['id'], um['sig'], um['args'], result)
+        print marshalled
+        self.client.transmit_data(marshalled)
+
+    def _set_arg_types(self, args, sig):
+        typed_args = []
+        for i in range(0, len(args)):
+            if sig[i] == 'int':
+                new_arg = int(args[i])
+            elif sig[i] == 'float':
+                new_arg = int(args[i])
+            elif sig[i] == 'bool':
+                new_arg = bool(args[i])
+            elif sig[i] == 'str':
+                new_arg = args[i]
+            typed_args.append(new_arg)
+        return typed_args
 
     def _unmarshal(self, data):
         return self.marshal.unmarshal(data)
 
     def _call(self, meth_name, *args):
         return self.method_impls[meth_name](*args)
-
-    def _send(result):
-        marshalled = self.marshal.marshal(result)
-        self.client.transmit_data(marshalled)
 
     def _register_methods(self):
         methods = [x for x in dir(MethodImplementations) if x[0:1] != '_']
@@ -42,7 +49,7 @@ class Server:
             self.method_impls[method] = getattr(self.methods, method)
 
 server = Server(1234, 'localhost')
-server.receive()
 
-# TODO: Check that that parameters match the signature, and are of the valid type
-#       Unmarshalling - returns the skeleton
+while True:
+    result, unmarshalled = server.receive()
+    server.send(result, unmarshalled)

@@ -21,16 +21,12 @@ class Proxy(Interface):
 
     def get_remote_answer(self, meth_name, signature, req_id, *args):
         marshalled = self.marshaller.marshal(meth_name, req_id, signature, *args)
-        return self._transmit(marshalled)
-        # print marshalled
-        # data = self._transmit(marshalled)
-        # return self.marshaller.unmarshal(data)
+        data = self._transmit(marshalled)
+        return self.marshaller.unmarshal(data)['result']
 
     def _transmit(self, data):
-        print data
-        return 1
-        # self.client.transmit_data(data)
-        # return server.receive_loop()
+        self.client.transmit_data(data)
+        return self.server.receive_loop()
 
     def _init_funcs(self):
         stubs = {}
@@ -43,13 +39,12 @@ class Stub:
         self.method_name = method_name
         self.signature = signature
         self.proxy = proxy
-        # self.req_id
-        
+
     def create_stub(self, *args):
         self.args = args
         self.proxy.req_id = self.proxy.req_id + 1 % sys.maxint
         self.req_id = self.proxy.req_id
         return self.receive_answer()
-        
+
     def receive_answer(self):
         return self.proxy.get_remote_answer(self.method_name, self.signature, self.req_id, self.args)
